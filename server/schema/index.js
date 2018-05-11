@@ -1,8 +1,15 @@
-const { makeExecutableSchema } = require('graphql-tools')
-const { typeDefs, resolvers } = require('./task')
-// const { typeDefs, resolvers } = require('./author')
+const {
+  makeExecutableSchema,
+  addMockFunctionsToSchema
+} = require('graphql-tools')
 
-module.exports = makeExecutableSchema({
+const { typeDefs, resolvers } = require('./task')
+
+const schema = makeExecutableSchema({
   typeDefs,
   resolvers
 })
+
+// addMockFunctionsToSchema({ schema })
+
+module.exports = schema
