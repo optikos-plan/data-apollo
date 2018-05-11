@@ -22,6 +22,7 @@ const loaders = {
 }
 
 const typeDefs = `
+
   type User {
     id: ID!
     name: String!
@@ -41,6 +42,11 @@ const typeDefs = `
     Details about the task
     """
     description: String!
+
+    """
+    End date
+    """
+    endDate: String
 
     """
     The list of tasks this task depends on. Its dependencies
@@ -100,6 +106,15 @@ const typeDefs = `
       newTitle: String!
     ): Task
 
+
+    """
+    Update task date
+    """
+    updateTaskEndDate(
+      id: ID!
+      date: String!
+    ): Task
+
   }
 `
 
@@ -113,7 +128,9 @@ const resolvers = {
   },
 
   Task: {
-    // id: ({ id }) => id,
+    // TODO: use a scalar to represent DATE type to avoid serialization errors
+    //
+    endDate: ({ endDate }) => new Date(endDate.split('-').map(c => +c)),
     owner: ({ userId }) => loaders.user.load(userId),
     children: ({ children }) => loaders.task.loadMany(children),
     parents: ({ parents }) => loaders.task.loadMany(parents)
@@ -164,7 +181,14 @@ const resolvers = {
       const { status } = await axios.patch(`${legacyBaseUrl}/tasks/${id}`, {
         title
       })
+      return 200 === status ? loaders.task.load(id) : apiError(status)
+    },
 
+    updateTaskEndDate: async (_, args) => {
+      const { id, date: endDate } = args
+      const { status } = await axios.patch(`${legacyBaseUrl}/tasks/${id}`, {
+        endDate
+      })
       return 200 === status ? loaders.task.load(id) : apiError(status)
     }
   }
