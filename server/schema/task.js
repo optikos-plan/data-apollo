@@ -1,7 +1,17 @@
 const axios = require('axios')
+const DataLoader = require('dataloader')
+const legacyBaseUrl = 'http://localhost:3000'
+
+const getTaskById = id => {
+  console.log('Get TASK: ', id)
+  return axios.get(`${legacyBaseUrl}/tasks/${id}`)
+}
+
+const loaders = {
+  task: new DataLoader(keys => Promise.all(keys.map(getTaskById)))
+}
 
 const typeDefs = `
-{
   type Task {
     id: ID!
     title: String!
@@ -9,7 +19,7 @@ const typeDefs = `
     """
     The list of tasks this task depends on. Its dependencies
     """
-    parents: [Task]!
+    parents: [Task]
 
     """
     The list of tasks that depends on this task
@@ -31,15 +41,26 @@ const typeDefs = `
       children: [ID]
     ): Task
   }
-}
 `
 
-const legacyBaseUrl = 'http://localhost:3000'
+// const legacyBaseUrl = 'http://localhost:3000'
 
 const resolvers = {
   Query: {
-    tasks: () => axios.get(`${legacyBaseUrl}/tasks`),
-    task: (_, { id }) => axios.get(`${legacyBaseUrl}/tasks/${id}`)
+    tasks: async () => {
+      const { data } = await axios.get(`${legacyBaseUrl}/tasks`)
+      return data
+    },
+
+    task: async (obj, { id }) => {
+      const { data } = await loaders.task.load(id)
+      return data
+    }
+  },
+
+  Task: {
+    children: async ({ children }) => await loaders.task.loadMany(children),
+    parents: async ({ parents }) => await loaders.task.loadMany(parents)
   },
 
   Mutation: {
