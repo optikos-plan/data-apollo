@@ -2,6 +2,10 @@ const axios = require('axios')
 const DataLoader = require('dataloader')
 const legacyBaseUrl = 'http://localhost:3000'
 
+const apiError = status => ({
+  error: `The command could not be completed. Status: ${status}`
+})
+
 const getTaskById = id => {
   console.log('Get TASK: ', id)
   return axios.get(`${legacyBaseUrl}/tasks/${id}`).then(res => res.data)
@@ -87,6 +91,15 @@ const typeDefs = `
       childId: ID!,
       parentId: ID!
     ): Task
+
+    """
+    Update task title
+    """
+    updateTaskTitle(
+      id: ID!
+      newTitle: String!
+    ): Task
+
   }
 `
 
@@ -115,11 +128,7 @@ const resolvers = {
       )
 
       // our json-server datastore returns 200 if patch successful.
-      if (200 === status) {
-        return loaders.task.load(id)
-      }
-
-      return {}
+      return 200 === status ? loaders.task.load(id) : apiError(status)
     },
 
     addDependencyToTask: async (_, { childId, parentId }) => {
@@ -128,7 +137,7 @@ const resolvers = {
 
       if ('errors' in child || 'errors' in parent) return {}
 
-      const { status, data } = await axios.patch(
+      let { status, data } = await axios.patch(
         `${legacyBaseUrl}/tasks/${childId}`,
         {
           parents: [...child.parents, +parentId]
@@ -144,11 +153,19 @@ const resolvers = {
             children: [...parent.children, +childId]
           }
         )
-
-        if (response.status === 200) return loaders.task.load(childId)
+        status = response.status
       }
 
-      return {}
+      return 200 === status ? loaders.task.load(childId) : apiError(status)
+    },
+
+    updateTaskTitle: async (_, args) => {
+      const { id, newTitle: title } = args
+      const { status } = await axios.patch(`${legacyBaseUrl}/tasks/${id}`, {
+        title
+      })
+
+      return 200 === status ? loaders.task.load(id) : apiError(status)
     }
   }
 }
