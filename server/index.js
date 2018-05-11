@@ -1,10 +1,17 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+const cors = require('express-cors')
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express')
 const schema = require('./schema')
 
 // Initialize the app
 const app = express()
+
+app.use(
+  cors({
+    allowedOrigins: ['localhost:*']
+  })
+)
 
 // The GraphQL endpoint
 app.use('/graphql', bodyParser.json(), graphqlExpress({ schema }))
