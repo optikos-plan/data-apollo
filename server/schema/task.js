@@ -115,6 +115,14 @@ const typeDefs = `
       date: String!
     ): Task
 
+
+    """
+    Update task owner
+    """
+    updateTaskOwner(
+      id: ID!
+      owner: ID!
+    ): Task
   }
 `
 
@@ -130,7 +138,8 @@ const resolvers = {
   Task: {
     // TODO: use a scalar to represent DATE type to avoid serialization errors
     //
-    endDate: ({ endDate }) => new Date(endDate.split('-').map(c => +c)),
+    endDate: ({ endDate }) =>
+      endDate ? new Date(endDate.split('-').map(c => +c)) : null,
     owner: ({ userId }) => loaders.user.load(userId),
     children: ({ children }) => loaders.task.loadMany(children),
     parents: ({ parents }) => loaders.task.loadMany(parents)
@@ -188,6 +197,14 @@ const resolvers = {
       const { id, date: endDate } = args
       const { status } = await axios.patch(`${legacyBaseUrl}/tasks/${id}`, {
         endDate
+      })
+      return 200 === status ? loaders.task.load(id) : apiError(status)
+    },
+
+    updateTaskOwner: async (_, args) => {
+      const { id, owner } = args
+      const { status } = await axios.patch(`${legacyBaseUrl}/tasks/${id}`, {
+        userId: owner
       })
       return 200 === status ? loaders.task.load(id) : apiError(status)
     }
