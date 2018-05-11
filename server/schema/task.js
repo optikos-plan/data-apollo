@@ -33,9 +33,9 @@ const typeDefs = `
     id: ID!
 
     """
-    Task owner
+    Task user
     """
-    owner: User
+    user: User
     title: String!
 
     """
@@ -117,11 +117,11 @@ const typeDefs = `
 
 
     """
-    Update task owner
+    Update task user
     """
     updateTaskOwner(
       id: ID!
-      owner: ID!
+      user: ID!
     ): Task
   }
 `
@@ -140,7 +140,7 @@ const resolvers = {
     //
     endDate: ({ endDate }) =>
       endDate ? new Date(endDate.split('-').map(c => +c)) : null,
-    owner: ({ userId }) => loaders.user.load(userId),
+    user: ({ userId }) => loaders.user.load(userId),
     children: ({ children }) => loaders.task.loadMany(children),
     parents: ({ parents }) => loaders.task.loadMany(parents)
   },
@@ -202,9 +202,9 @@ const resolvers = {
     },
 
     updateTaskOwner: async (_, args) => {
-      const { id, owner } = args
+      const { id, user } = args
       const { status } = await axios.patch(`${legacyBaseUrl}/tasks/${id}`, {
-        userId: owner
+        userId: user
       })
       return 200 === status ? loaders.task.load(id) : apiError(status)
     }
