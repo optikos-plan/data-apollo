@@ -137,9 +137,9 @@ const resolvers = {
 
   Task: {
     // TODO: use a scalar to represent DATE type to avoid serialization errors
+    // Right now the UI depends on the date to be a string: YYYY-MM-DD. This is
+    // not optimal.
     //
-    endDate: ({ endDate }) =>
-      endDate ? new Date(endDate.split('-').map(c => +c)) : null,
     user: ({ userId }) => loaders.user.load(userId),
     children: ({ children }) => loaders.task.loadMany(children),
     parents: ({ parents }) => loaders.task.loadMany(parents)
