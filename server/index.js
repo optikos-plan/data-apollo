@@ -4,6 +4,8 @@ const cors = require('express-cors')
 const { graphqlExpress, graphiqlExpress } = require('apollo-server-express')
 const schema = require('./schema')
 
+const PORT = process.env.PORT || 3999
+
 // Initialize the app
 const app = express()
 
@@ -20,6 +22,6 @@ app.use('/graphql', bodyParser.json(), graphqlExpress({ schema }))
 app.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }))
 
 // Start the server
-app.listen(3999, () => {
-  console.log('Go to http://localhost:3000/graphiql to run queries!')
+app.listen(PORT, () => {
+  console.log(`Go to http://localhost:${PORT}/graphiql to run queries!`)
 })
