@@ -206,6 +206,9 @@ const resolvers = {
       const { status } = await axios.patch(`${legacyBaseUrl}/tasks/${id}`, {
         userId: user
       })
+      console.log(
+        `UpdateTaskOwner: id: ${id}\tuser: ${user}\tStatus: ${status}`
+      )
       return 200 === status ? loaders.task.load(id) : apiError(status)
     }
   }
