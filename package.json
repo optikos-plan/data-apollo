@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start:dev": "node server"
+    "start": "node server",
+    "deploy": "sh ./scripts/deploy.sh"
   },
   "keywords": [],
   "author": "Amal Sudama <cds.sudama@gmail.com>",

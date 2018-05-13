@@ -5,6 +5,7 @@ const { graphqlExpress, graphiqlExpress } = require('apollo-server-express')
 const schema = require('./schema')
 
 const PORT = process.env.PORT || 3999
+const DATASTORE = process.env.DATASTORE || 'http://localhost'
 
 // Initialize the app
 const app = express()
@@ -23,5 +24,5 @@ app.use('/graphiql', graphiqlExpress({ endpointURL: '/graphql' }))
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Go to http://localhost:${PORT}/graphiql to run queries!`)
+  console.log(`Go to ${DATASTORE}:${PORT}/graphiql to run queries!`)
 })
