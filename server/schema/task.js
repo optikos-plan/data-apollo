@@ -1,5 +1,6 @@
 const User = require('./user')
 const CompletionStatus = require('./completionStatus')
+const Project = require('./project.js')
 
 const Task = `
   type Task {
@@ -23,6 +24,12 @@ const Task = `
 
 
     """
+    This project this task belongs to
+    """
+    project: Project!
+
+
+    """
     The status of the project
     """
     status: CompletionStatus
@@ -40,4 +47,4 @@ const Task = `
 
 `
 
-module.exports = [Task, User, CompletionStatus]
+module.exports = [Task, User, CompletionStatus, Project]

@@ -4,24 +4,40 @@ const resolvers = require('./resolvers')
 const RootQuery = `
   type RootQuery {
     """
-    Retrieve all tasks
+    Retrieve all Tasks
     """
     tasks: [Task]
 
+
     """
-    Retrieve a specific task @id
+    Retrieve a specific Task @id
     """
     task(id: ID!): Task
     """
 
-    Retrieve all users
+
+    Retrieve all Users
     """
     users: [User]
 
+
     """
-    Retrieve a specific user @id
+    Retrieve a specific User @id
     """
     user(id: ID!): User
+
+
+    """
+    Retrieve all Projects
+    """
+    projects: [Project]
+
+
+    """
+    Retrieve a specific Project @id
+    """
+    project(id: ID!): Project
+
   }
 `
 
@@ -31,8 +47,10 @@ const RootMutation = `
       id: ID!,
       title: String,
       parents: [ID],
+      status: CompletionStatus,
       children: [ID]
     ): Task
+
 
     """
     make the relationship child <----> parent
@@ -42,8 +60,9 @@ const RootMutation = `
       parentId: ID!
     ): Task
 
+
     """
-    Update task title
+    Update Task title
     """
     updateTaskTitle(
       id: ID!
@@ -52,7 +71,7 @@ const RootMutation = `
 
 
     """
-    Update task date
+    Update Task date
     """
     updateTaskEndDate(
       id: ID!
@@ -61,12 +80,23 @@ const RootMutation = `
 
 
     """
-    Update task user
+    Update Task user
     """
     updateTaskOwner(
       id: ID!
       user: ID!
     ): Task
+
+
+    """
+    Create Project
+    """
+    createProject (
+      owner: ID!
+      title: String!
+      status: CompletionStatus = ASSIGNED
+      tasks: [ID]
+    ): Project
   }
 `
 

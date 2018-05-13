@@ -6,6 +6,7 @@ const makeDetailsUrl = resource => id => `${legacyBaseUrl}/${resource}/${id}`
 
 const taskDetails = makeDetailsUrl('tasks')
 const userDetails = makeDetailsUrl('users')
+const projectDetails = makeDetailsUrl('projects')
 
 const apiError = status => ({
   error: `The command could not be completed. Status: ${status}`
@@ -27,9 +28,15 @@ const getUserById = id => {
   return axios.get(userDetails(id)).then(res => res.data)
 }
 
+const getProjectById = id => {
+  logMe('GET', `Project(${id})`)
+  return axios.get(projectDetails(id)).then(res => res.data)
+}
+
 const loaders = {
   task: new DataLoader(keys => Promise.all(keys.map(getTaskById))),
-  user: new DataLoader(keys => Promise.all(keys.map(getUserById)))
+  user: new DataLoader(keys => Promise.all(keys.map(getUserById))),
+  project: new DataLoader(keys => Promise.all(keys.map(getProjectById)))
 }
 
 const resolvers = {
@@ -38,7 +45,16 @@ const resolvers = {
     task: (obj, { id }) => loaders.task.load(id),
 
     users: () => axios.get(`${legacyBaseUrl}/users`).then(res => res.data),
-    user: (obj, { id }) => loaders.user.load(id)
+    user: (obj, { id }) => loaders.user.load(id),
+
+    projects: () =>
+      axios.get(`${legacyBaseUrl}/projects`).then(res => res.data),
+    project: (obj, { id }) => loaders.project.load(id)
+  },
+
+  Project: {
+    owner: ({ owner }) => loaders.user.load(owner),
+    tasks: ({ tasks }) => loaders.task.loadMany(tasks)
   },
 
   Task: {
@@ -52,6 +68,14 @@ const resolvers = {
   },
 
   RootMutation: {
+    createProject: async (_, args) => {
+      const { status, data } = await axios.post(
+        `${legacyBaseUrl}/projects`,
+        args
+      )
+      return 201 === status ? loaders.project.load(data.id) : apiError(status)
+    },
+
     updateTask: async (_, args) => {
       const { id } = args
       const { status } = await axios.patch(taskDetails(id), args)
