@@ -1,0 +1,112 @@
+const axios = require('axios')
+const DataLoader = require('dataloader')
+const legacyBaseUrl = 'http://localhost:3000'
+
+const apiError = status => ({
+  error: `The command could not be completed. Status: ${status}`
+})
+
+const getTaskById = id => {
+  console.log('Get TASK: ', id)
+  return axios.get(`${legacyBaseUrl}/tasks/${id}`).then(res => res.data)
+}
+
+const getUserById = id => {
+  console.log('Get USER: ', id)
+  return axios.get(`${legacyBaseUrl}/users/${id}`).then(res => res.data)
+}
+
+const loaders = {
+  task: new DataLoader(keys => Promise.all(keys.map(getTaskById))),
+  user: new DataLoader(keys => Promise.all(keys.map(getUserById)))
+}
+
+const resolvers = {
+  RootQuery: {
+    tasks: () => axios.get(`${legacyBaseUrl}/tasks`).then(res => res.data),
+    task: (obj, { id }) => loaders.task.load(id),
+
+    users: () => axios.get(`${legacyBaseUrl}/users`).then(res => res.data),
+    user: (obj, { id }) => loaders.user.load(id)
+  },
+
+  Task: {
+    // TODO: use a scalar to represent DATE type to avoid serialization errors
+    // Right now the UI depends on the date to be a string: YYYY-MM-DD. This is
+    // not optimal.
+    //
+    user: ({ userId }) => loaders.user.load(userId),
+    children: ({ children }) => loaders.task.loadMany(children),
+    parents: ({ parents }) => loaders.task.loadMany(parents)
+  },
+
+  RootMutation: {
+    updateTask: async (_, args) => {
+      const { id } = args
+      const { status, data } = await axios.patch(
+        `${legacyBaseUrl}/tasks/${id}`,
+        args
+      )
+
+      // our json-server datastore returns 200 if patch successful.
+      return 200 === status ? loaders.task.load(id) : apiError(status)
+    },
+
+    addDependencyToTask: async (_, { childId, parentId }) => {
+      const child = await loaders.task.load(childId)
+      const parent = await loaders.task.load(parentId)
+
+      if ('errors' in child || 'errors' in parent) return {}
+
+      let { status, data } = await axios.patch(
+        `${legacyBaseUrl}/tasks/${childId}`,
+        {
+          parents: [...child.parents, +parentId]
+        }
+      )
+
+      // our json-server datastore returns 200 if patch successful.
+      if (200 === status) {
+        // update parent
+        const response = await axios.patch(
+          `${legacyBaseUrl}/tasks/${parentId}`,
+          {
+            children: [...parent.children, +childId]
+          }
+        )
+        status = response.status
+      }
+
+      return 200 === status ? loaders.task.load(childId) : apiError(status)
+    },
+
+    updateTaskTitle: async (_, args) => {
+      const { id, newTitle: title } = args
+      const { status } = await axios.patch(`${legacyBaseUrl}/tasks/${id}`, {
+        title
+      })
+      return 200 === status ? loaders.task.load(id) : apiError(status)
+    },
+
+    updateTaskEndDate: async (_, args) => {
+      const { id, date: endDate } = args
+      const { status } = await axios.patch(`${legacyBaseUrl}/tasks/${id}`, {
+        endDate
+      })
+      return 200 === status ? loaders.task.load(id) : apiError(status)
+    },
+
+    updateTaskOwner: async (_, args) => {
+      const { id, user } = args
+      const { status } = await axios.patch(`${legacyBaseUrl}/tasks/${id}`, {
+        userId: user
+      })
+      console.log(
+        `UpdateTaskOwner: id: ${id}\tuser: ${user}\tStatus: ${status}`
+      )
+      return 200 === status ? loaders.task.load(id) : apiError(status)
+    }
+  }
+}
+
+module.exports = resolvers
