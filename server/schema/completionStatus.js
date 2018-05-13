@@ -8,9 +8,9 @@ const CompletionStatus = `
 
 
     """
-    No dependency and Work has not yet begun
+    The Task is assigned and work has not begun
     """
-    PENDING
+    ASSIGNED
 
 
     IN_PROGRESS
