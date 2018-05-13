@@ -1,4 +1,5 @@
 const User = require('./user')
+const CompletionStatus = require('./completionStatus')
 
 const Task = `
   type Task {
@@ -20,6 +21,12 @@ const Task = `
     """
     endDate: String
 
+
+    """
+    The status of the project
+    """
+    status: CompletionStatus
+
     """
     The list of tasks this task depends on. Its dependencies
     """
@@ -33,4 +40,4 @@ const Task = `
 
 `
 
-module.exports = [Task, User]
+module.exports = [Task, User, CompletionStatus]
