@@ -70,6 +70,7 @@ const resolvers = {
 
   RootMutation: {
     createProject: async (_, args) => {
+      logMe('CreateProject', args)
       const { status, data } = await axios.post(
         `${legacyBaseUrl}/projects`,
         args
@@ -78,6 +79,7 @@ const resolvers = {
     },
 
     updateTask: async (_, args) => {
+      logMe('UpdateTask', args)
       const { id } = args
       const { status } = await axios.patch(taskDetails(id), args)
       return 200 === status ? loaders.task.load(id) : apiError(status)
@@ -109,6 +111,7 @@ const resolvers = {
 
     updateTaskTitle: async (_, args) => {
       const { id, newTitle: title } = args
+      logMe('UpdateTitle', title)
       const { status } = await axios.patch(taskDetails(id), {
         title
       })
@@ -118,6 +121,7 @@ const resolvers = {
 
     updateTaskEndDate: async (_, args) => {
       const { id, date: endDate } = args
+      logMe('UpdateEndDate', endDate)
       const { status } = await axios.patch(taskDetails(id), {
         endDate
       })
