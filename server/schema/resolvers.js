@@ -63,6 +63,7 @@ const resolvers = {
     // not optimal.
     //
     user: ({ userId }) => loaders.user.load(userId),
+    project: ({ projectId }) => loaders.project.load(projectId),
     children: ({ children }) => loaders.task.loadMany(children),
     parents: ({ parents }) => loaders.task.loadMany(parents)
   },
