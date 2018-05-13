@@ -54,9 +54,7 @@ const resolvers = {
   RootMutation: {
     updateTask: async (_, args) => {
       const { id } = args
-      const { status, data } = await axios.patch(taskDetails(id), args)
-
-      // our json-server datastore returns 200 if patch successful.
+      const { status } = await axios.patch(taskDetails(id), args)
       return 200 === status ? loaders.task.load(id) : apiError(status)
     },
 
@@ -70,7 +68,7 @@ const resolvers = {
        */
       if ('errors' in child || 'errors' in parent) return {}
 
-      let { status, data } = await axios.patch(taskDetails(childId), {
+      let { status } = await axios.patch(taskDetails(childId), {
         parents: [...child.parents, +parentId]
       })
 
