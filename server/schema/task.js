@@ -96,7 +96,6 @@ const typeDefs = `
     tasks: [Task]
   }
 
-
   type Query {
     """
     Retrieve all tasks
@@ -172,7 +171,21 @@ const typeDefs = `
       id: ID!
       user: ID!
     ): Task
+
+
+    """
+    Create project
+    """
+    createProject (
+      owner: ID!
+      title: String!
+      status: PROJECT_STATUS = notStarted
+      tasks: [ID]
+    ): Project
   }
+
+
+
 `;
 
 const resolvers = {
@@ -212,6 +225,15 @@ const resolvers = {
 
       // our json-server datastore returns 200 if patch successful.
       return 200 === status ? loaders.task.load(id) : apiError(status);
+    },
+
+    createProject: async (_, args) => {
+      const { status, data } = await axios.post(
+        `${legacyBaseUrl}/projects`,
+        args
+      );
+      // our json-server datastore returns 200 if post successful.
+      return 201 === status ? loaders.project.load(data.id) : apiError(status);
     },
 
     addDependencyToTask: async (_, { childId, parentId }) => {
