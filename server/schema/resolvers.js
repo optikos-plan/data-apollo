@@ -1,7 +1,7 @@
 const axios = require('axios')
 const DataLoader = require('dataloader')
 
-const DATASTORE = process.env.DATASTORE || 'http://localhost:3999'
+const DATASTORE = process.env.DATASTORE || 'http://localhost:3000'
 
 const legacyBaseUrl = `${DATASTORE}`
 const makeDetailsUrl = resource => id => `${legacyBaseUrl}/${resource}/${id}`
