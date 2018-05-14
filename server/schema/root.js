@@ -97,6 +97,19 @@ const RootMutation = `
       status: CompletionStatus = ASSIGNED
       tasks: [ID]
     ): Project
+
+    """
+    Create Task
+    """
+    createTask (
+      projectId: ID!
+      userId: ID!
+      title: String!
+      status: CompletionStatus = ASSIGNED
+      children: [ID] = []
+      endDate: String = "" 
+    ): Task
+
   }
 `
 
