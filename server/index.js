@@ -11,7 +11,7 @@ const app = express()
 
 app.use(
   cors({
-    allowedOrigins: ['localhost:*']
+    allowedOrigins: ['localhost:*', 'https://optikos-client.herokuapp.com:*']
   })
 )
 
