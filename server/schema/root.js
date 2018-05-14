@@ -94,8 +94,9 @@ const RootMutation = `
     createProject (
       owner: ID!
       title: String!
+      description: String
       status: CompletionStatus = ASSIGNED
-      tasks: [ID]
+      tasks: [ID] = []
     ): Project
   }
 `
