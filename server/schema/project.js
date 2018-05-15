@@ -22,6 +22,12 @@ const Project = `
 
 
     """
+    Project Description
+    """
+    description: String
+
+
+    """
     Tasks related to a project
     """
     tasks: [Task]
