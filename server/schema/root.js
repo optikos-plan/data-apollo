@@ -108,8 +108,12 @@ const RootMutation = `
       status: CompletionStatus = ASSIGNED
       children: [ID] = []
       endDate: String = "" 
+      parents: [ID] = []
     ): Task
 
+    deleteTask (
+      id: ID!
+    ): Task
   }
 `
 
