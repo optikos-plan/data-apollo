@@ -9,6 +9,7 @@ const makeDetailsUrl = resource => id => `${legacyBaseUrl}/${resource}/${id}`
 const taskDetails = makeDetailsUrl('tasks')
 const userDetails = makeDetailsUrl('users')
 const projectDetails = makeDetailsUrl('projects')
+const peopleDetails = makeDetailsUrl('people')
 
 const apiError = status => ({
   error: `The command could not be completed. Status: ${status}`
@@ -35,10 +36,16 @@ const getProjectById = id => {
   return axios.get(projectDetails(id)).then(res => res.data)
 }
 
+const getPeopleById = id => {
+  logMe('GET', `People(${id})`)
+  return axios.get(peopleDetails(id)).then(res => res.data)
+}
+
 const loaders = {
   task: new DataLoader(keys => Promise.all(keys.map(getTaskById))),
   user: new DataLoader(keys => Promise.all(keys.map(getUserById))),
-  project: new DataLoader(keys => Promise.all(keys.map(getProjectById)))
+  project: new DataLoader(keys => Promise.all(keys.map(getProjectById))),
+  people: new DataLoader(keys => Promise.all(keys.map(getPeopleById)))
 }
 
 const resolvers = {
@@ -49,13 +56,20 @@ const resolvers = {
     users: () => axios.get(`${legacyBaseUrl}/users`).then(res => res.data),
     user: (obj, { id }) => loaders.user.load(id),
 
-    projects: () =>
-      axios.get(`${legacyBaseUrl}/projects`).then(res => res.data),
-    project: (obj, { id }) => loaders.project.load(id)
+    projects: () => axios.get(`${legacyBaseUrl}/projects`).then(res => res.data),
+    project: (obj, { id }) => loaders.project.load(id),
+
+    people: () => axios.get(`${legacyBaseUrl}/people`).then(res => res.data),
+    person: (obj, { id }) => loaders.people.load(id),
   },
 
   Project: {
     owner: ({ owner }) => loaders.user.load(owner),
+    tasks: ({ tasks }) => loaders.task.loadMany(tasks)
+  },
+
+  People: {
+    projects: ({ projects }) => loaders.project.loadMany(projects),
     tasks: ({ tasks }) => loaders.task.loadMany(tasks)
   },
 
@@ -75,6 +89,15 @@ const resolvers = {
       logMe('CreateProject', args)
       const { status, data } = await axios.post(
         `${legacyBaseUrl}/projects`,
+        args
+      )
+      return 201 === status ? loaders.project.load(data.id) : apiError(status)
+    },
+
+    createPerson: async (_, args) => {
+      logMe('CreatePerson', args)
+      const { status, data } = await axios.post(
+        `${legacyBaseUrl}/people`,
         args
       )
       return 201 === status ? loaders.project.load(data.id) : apiError(status)

@@ -98,6 +98,17 @@ const RootMutation = `
       tasks: [ID]
     ): Project
   }
+
+
+  """
+  Create Person
+  """
+  createPerson (
+    name: String!
+    email: String!
+  ): Project
+}
+
 `
 
 const SchemaDefinition = `
