@@ -80,6 +80,26 @@ const resolvers = {
       return 201 === status ? loaders.project.load(data.id) : apiError(status)
     },
 
+    createTask: async (_, args) => {
+      logMe('CreateTask', args)
+      const { status, data } = await axios.post(
+        `${legacyBaseUrl}/tasks/`,
+        args
+      )
+      return 201 === status ? loaders.task.load(data.id) : apiError(status)
+    },
+
+    deleteTask: async (_, args) => {
+      logMe('DeleteTask', args)
+      const { id } = args
+      const { status } = await axios.delete(
+        `${legacyBaseUrl}/tasks/${id}`
+      )
+      //to prevent error, need to return non-null value
+      return {id}
+    },
+
+
     updateTask: async (_, args) => {
       logMe('UpdateTask', args)
       const { id } = args
