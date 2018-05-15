@@ -10,13 +10,50 @@ const taskDetails = makeDetailsUrl('tasks')
 const userDetails = makeDetailsUrl('users')
 const projectDetails = makeDetailsUrl('projects')
 
+// if a res is deleted, remove all references of res' foreign key
+// if delete user: remove ref to userId from project, and task entities
+// if delete task: remove ref from project and task entities [children and parents]
+// if delte project: CASCADE delte all references in tasks, and all tasks' refs to projectId
+//
+
+const deleteUser = uid => {
+  // remove user with DELETE
+  // constraint: If a user is associated with a project (ie owner) then cannot
+  // be deleted.  THIS WILL BE VALIDATED ON THE CLIENT SIDE THE DATABASE WILL
+  // ASSUME VALID OPERATIONS ARE PRESENTED
+  //
+  // get all tasks filtered by uid: update each task to remove uid reference
+}
+
+const deleteTask = tid => {
+  // remove task with DELETE
+  // get all tasks filtered by child conntains tid: update child to remove tid
+  // get all tasks filtered by parent conntains tid: update child to remove tid
+}
+
+/* const deleteProject = async pid => {
+ *   // remove project with delete
+ *   // get all tasks filtered by pid : call delete and delete them
+ *   // get user associated with this pid and remove project ** this may not exist.
+ *   //
+ *   const projecturl = projectDetails(pid)
+ *   await axios.delete(projecturl)
+ *
+ *   const { data: tasks } = await axios.get(`${legacyBaseUrl}/tasks`)
+ *
+ *   const mytasks = tasks.filter(task => task.projectid === pid)
+ *   mytasks.foreach(task => console.log('delete task', task.id))
+ *
+ *   await Promise.all(mytasks.map(task => axios.delete(taskDetails(task.id))))
+ * } */
+
 const apiError = status => ({
   error: `The command could not be completed. Status: ${status}`
 })
 
 const logMe = (label, message) => {
   console.group(label)
-  console.info(message + '\n')
+  console.info(message, '\n')
   console.groupEnd()
 }
 
@@ -80,25 +117,46 @@ const resolvers = {
       return 201 === status ? loaders.project.load(data.id) : apiError(status)
     },
 
+    deleteProject: async (_, { id }) => {
+      logMe('DeleteProject', id)
+      // remove project with delete
+      // get all tasks filtered by pid : call delete and delete them
+      // get user associated with this pid and remove project ** this may not exist.
+      //
+      try {
+        const projectUrl = projectDetails(id)
+        logMe('project url: ', projectUrl)
+        const { data } = await axios.delete(projectUrl)
+
+        const { data: tasks } = await axios.get(`${legacyBaseUrl}/tasks`)
+
+        const mytasks = tasks.filter(task => task.projectId === id)
+        mytasks.foreach(task => logMe('delete task', task.id))
+
+        await Promise.all(
+          mytasks.map(task => axios.delete(taskDetails(task.id)))
+        )
+        return { id }
+      } catch (error) {
+        return apiError(error)
+      }
+
+      return { id }
+    },
+
     createTask: async (_, args) => {
       logMe('CreateTask', args)
-      const { status, data } = await axios.post(
-        `${legacyBaseUrl}/tasks/`,
-        args
-      )
+      const { status, data } = await axios.post(`${legacyBaseUrl}/tasks/`, args)
       return 201 === status ? loaders.task.load(data.id) : apiError(status)
     },
 
     deleteTask: async (_, args) => {
       logMe('DeleteTask', args)
       const { id } = args
-      const { status } = await axios.delete(
-        `${legacyBaseUrl}/tasks/${id}`
-      )
+      const { status } = await axios.delete(`${legacyBaseUrl}/tasks/${id}`)
       //to prevent error, need to return non-null value
-      return {id}
+      return { id }
     },
-
 
     updateTask: async (_, args) => {
       logMe('UpdateTask', args)

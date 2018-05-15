@@ -99,6 +99,13 @@ const RootMutation = `
       tasks: [ID] = []
     ): Project
 
+
+    """
+    Delete Project
+    """
+    deleteProject(id: ID!): Boolean
+
+
     """
     Create Task
     """
@@ -108,7 +115,7 @@ const RootMutation = `
       title: String!
       status: CompletionStatus = ASSIGNED
       children: [ID] = []
-      endDate: String = "" 
+      endDate: String = ""
       parents: [ID] = []
     ): Task
 
