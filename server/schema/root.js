@@ -98,17 +98,6 @@ const RootMutation = `
     ): User
 
     """
-    Create Project
-    """
-    createProject (
-      owner: ID!
-      title: String!
-      description: String
-      status: CompletionStatus = ASSIGNED
-      tasks: [ID] = []
-    ): Project
-
-    """
     Create Task
     """
     createTask (
@@ -117,7 +106,7 @@ const RootMutation = `
       title: String!
       status: CompletionStatus = ASSIGNED
       children: [ID] = []
-      endDate: String = "" 
+      endDate: String = ""
       parents: [ID] = []
     ): Task
 
@@ -134,7 +123,25 @@ const RootMutation = `
     """
     deleteTask (
       id: ID!
-    ): Task
+    ): Boolean
+
+
+    """
+    Create Project
+    """
+    createProject (
+      owner: ID!
+      title: String!
+      description: String
+      status: CompletionStatus = ASSIGNED
+      tasks: [ID] = []
+    ): Project
+
+
+    """
+    Delete Project
+    """
+    deleteProject(id: ID!): Boolean
   }
 `
 
