@@ -89,9 +89,22 @@ const resolvers = {
       return 201 === status ? loaders.task.load(data.id) : apiError(status)
     },
 
+    createUser: async (_, args) => {
+      logMe('CreateUser', args)
+      const { status, data } = await axios.post(
+        `${legacyBaseUrl}/users/`,
+        args
+      )
+      return 201 === status ? loaders.user.load(data.id) : apiError(status)
+    },
+
     deleteTask: async (_, args) => {
       logMe('DeleteTask', args)
       const { id } = args
+
+      // needs to find all parents and children
+      // needs to delete id from parents children
+      // needs to delete id from chil
       const { status } = await axios.delete(
         `${legacyBaseUrl}/tasks/${id}`
       )
