@@ -140,8 +140,18 @@ const resolvers = {
       return 201 === status ? loaders.task.load(data.id) : apiError(status)
     },
 
+    createUser: async (_, args) => {
+      logMe('CreateUser', args)
+      const { status, data } = await axios.post(
+        `${legacyBaseUrl}/users/`,
+        args
+      )
+      return 201 === status ? loaders.user.load(data.id) : apiError(status)
+    },
+
     deleteTask: async (_, args) => {
       logMe('DeleteTask', args)
+
       try {
         const { id } = args
 
@@ -251,7 +261,19 @@ const resolvers = {
       })
       logMe('UpdateTaskOwner', `id: ${id}\tuser: ${user}\tStatus: ${status}`)
       return 200 === status ? loaders.task.load(id) : apiError(status)
+    },
+
+    updateUser: async (_, args) => {
+      const { id, name, email } = args
+      const { status } = await axios.patch(userDetails(id), {
+        name,
+        email
+      })
+      logMe('UpdateUser', `id: ${id}\tname: ${name}\temail: ${email}`)
+      return 200 === status ? loaders.user.load(id) : apiError(status)
     }
+
+
   }
 }
 
