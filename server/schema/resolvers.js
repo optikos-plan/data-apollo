@@ -139,6 +139,11 @@ const resolvers = {
     createTask: async (_, args) => {
       logMe('CreateTask', args)
       const { status, data } = await axios.post(`${legacyBaseUrl}/tasks/`, args)
+      // TODO: add in relationships
+      // 1. link children to parent tasks
+      // 2. link parents to child task
+      // 3. update project.tasks to include me
+      //
       return 201 === status ? loaders.task.load(data.id) : apiError(status)
     },
 
