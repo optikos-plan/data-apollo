@@ -118,20 +118,19 @@ const resolvers = {
       // get user associated with this pid and remove project ** this may not exist.
       //
       try {
+        /* json server has a simple cascade-like delete
+         * ie if deleting a project will delete all
+         * tasks that references said project as a foreign key.
+         * In our case each Task has a projectId that references a project.
+         * see: https://github.com/typicode/json-server/blob/7c32f7121f10fbe675fac4be0853c4946f38709e/src/server/mixins.js#L10-L38
+         */
         const projectUrl = projectDetails(id)
         logMe('project url: ', projectUrl)
         await axios.delete(projectUrl)
 
-        const { data: tasks } = await axios.get(`${legacyBaseUrl}/tasks`)
-
-        const mytasks = tasks.filter(task => +task.projectId === +id)
-        mytasks.foreach(task => logMe('delete task', task.id))
-
-        await Promise.all(
-          mytasks.map(task => axios.delete(taskDetails(task.id)))
-        )
         return { id }
       } catch (error) {
+        console.log(error)
         return apiError(error)
       }
     },
