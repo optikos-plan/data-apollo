@@ -23,23 +23,9 @@ const deleteUser = uid => {
   // ASSUME VALID OPERATIONS ARE PRESENTED
   //
   // get all tasks filtered by uid: update each task to remove uid reference
+  //
+  // NOTE: beware json-server does a cascade delete.
 }
-
-/* const deleteProject = async pid => {
- *   // remove project with delete
- *   // get all tasks filtered by pid : call delete and delete them
- *   // get user associated with this pid and remove project ** this may not exist.
- *   //
- *   const projecturl = projectDetails(pid)
- *   await axios.delete(projecturl)
- *
- *   const { data: tasks } = await axios.get(`${legacyBaseUrl}/tasks`)
- *
- *   const mytasks = tasks.filter(task => task.projectid === pid)
- *   mytasks.foreach(task => console.log('delete task', task.id))
- *
- *   await Promise.all(mytasks.map(task => axios.delete(taskDetails(task.id))))
- * } */
 
 const apiError = status => ({
   error: `The command could not be completed. Status: ${status}`
