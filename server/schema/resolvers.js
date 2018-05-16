@@ -170,7 +170,19 @@ const resolvers = {
       })
       logMe('UpdateTaskOwner', `id: ${id}\tuser: ${user}\tStatus: ${status}`)
       return 200 === status ? loaders.task.load(id) : apiError(status)
+    },
+
+    updateUser: async (_, args) => {
+      const { id, name, email } = args
+      const { status } = await axios.patch(userDetails(id), {
+        name,
+        email
+      })
+      logMe('UpdateUser', `id: ${id}\tname: ${name}\temail: ${email}`)
+      return 200 === status ? loaders.user.load(id) : apiError(status)
     }
+
+
   }
 }
 

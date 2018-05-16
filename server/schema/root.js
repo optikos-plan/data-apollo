@@ -88,6 +88,14 @@ const RootMutation = `
       user: ID!
     ): Task
 
+    """
+    Update User
+    """
+    updateUser(
+      id: ID!
+      name: String
+      email: String
+    ): User
 
     """
     Create Project
