@@ -52,10 +52,18 @@ const getProjectById = id => {
   return axios.get(projectDetails(id)).then(res => res.data)
 }
 
+/* loaders.project.clear(id) to clear a cache
+ */
 const loaders = {
-  task: new DataLoader(keys => Promise.all(keys.map(getTaskById))),
-  user: new DataLoader(keys => Promise.all(keys.map(getUserById))),
-  project: new DataLoader(keys => Promise.all(keys.map(getProjectById)))
+  task: new DataLoader(keys => Promise.all(keys.map(getTaskById)), {
+    cache: false
+  }),
+  user: new DataLoader(keys => Promise.all(keys.map(getUserById)), {
+    cache: false
+  }),
+  project: new DataLoader(keys => Promise.all(keys.map(getProjectById)), {
+    cache: false
+  })
 }
 
 const resolvers = {
