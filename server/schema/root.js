@@ -121,7 +121,7 @@ const RootMutation = `
 
     deleteTask (
       id: ID!
-    ): Task
+    ): Boolean
   }
 `
 

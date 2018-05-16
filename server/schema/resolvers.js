@@ -25,12 +25,6 @@ const deleteUser = uid => {
   // get all tasks filtered by uid: update each task to remove uid reference
 }
 
-const deleteTask = tid => {
-  // remove task with DELETE
-  // get all tasks filtered by child conntains tid: update child to remove tid
-  // get all tasks filtered by parent conntains tid: update child to remove tid
-}
-
 /* const deleteProject = async pid => {
  *   // remove project with delete
  *   // get all tasks filtered by pid : call delete and delete them
@@ -126,11 +120,11 @@ const resolvers = {
       try {
         const projectUrl = projectDetails(id)
         logMe('project url: ', projectUrl)
-        const { data } = await axios.delete(projectUrl)
+        await axios.delete(projectUrl)
 
         const { data: tasks } = await axios.get(`${legacyBaseUrl}/tasks`)
 
-        const mytasks = tasks.filter(task => task.projectId === id)
+        const mytasks = tasks.filter(task => +task.projectId === +id)
         mytasks.foreach(task => logMe('delete task', task.id))
 
         await Promise.all(
@@ -140,8 +134,6 @@ const resolvers = {
       } catch (error) {
         return apiError(error)
       }
-
-      return { id }
     },
 
     createTask: async (_, args) => {
@@ -152,10 +144,60 @@ const resolvers = {
 
     deleteTask: async (_, args) => {
       logMe('DeleteTask', args)
-      const { id } = args
-      const { status } = await axios.delete(`${legacyBaseUrl}/tasks/${id}`)
-      //to prevent error, need to return non-null value
-      return { id }
+      try {
+        const { id } = args
+
+        // get task
+        const { data: task } = await axios.get(taskDetails(id))
+
+        // get all other tasks in the project
+        // ?_embed=tasks gets nested task result / eager-loading / join
+        const { data: aProject } = await axios.get(
+          projectDetails(task.projectId) + '?_embed=tasks'
+        )
+
+        const promises = []
+        const updatedTasks = aProject.tasks.filter(aTask => +aTask.id !== +id)
+
+        // Update all parent and child references
+        //
+        updatedTasks.forEach(aTask => {
+          const children = aTask.children.filter(child => +child !== +id)
+          const parents = aTask.parents.filter(parent => +parent !== +id)
+          console.log(
+            `PATCH ${id}:: TASK(${aTask.id}: children: ${
+              aTask.children
+            }, parents: ${aTask.parents})`
+          )
+          console.log(
+            `PATCH ${id}:: TASK(${
+              aTask.id
+            }: children: ${children}, parents: ${parents}\n\n`
+          )
+          promises.push(
+            axios.patch(taskDetails(aTask.id), { children, parents })
+          )
+        })
+
+        // updatedTasks is a list of objects, transform tasks
+        // to an array of ids.
+        //
+        promises.push(
+          axios.patch(projectDetails(task.projectId), {
+            tasks: updatedTasks.map(tobj => tobj.id)
+          })
+        )
+
+        // Delete the task itself
+        promises.push(axios.delete(`${legacyBaseUrl}/tasks/${id}`))
+
+        await Promise.all(promises)
+
+        return { id }
+      } catch (error) {
+        console.log(error)
+        return apiError(error)
+      }
     },
 
     updateTask: async (_, args) => {
@@ -169,10 +211,6 @@ const resolvers = {
       const child = await loaders.task.load(childId)
       const parent = await loaders.task.load(parentId)
 
-      /* TODO: Discuss with group how to handle this case.
-       * This code hides an exception, perhaps it is better
-       * to throw...
-       */
       if ('errors' in child || 'errors' in parent) return {}
 
       let { status } = await axios.patch(taskDetails(childId), {
