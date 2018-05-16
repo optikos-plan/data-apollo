@@ -10,13 +10,30 @@ const taskDetails = makeDetailsUrl('tasks')
 const userDetails = makeDetailsUrl('users')
 const projectDetails = makeDetailsUrl('projects')
 
+// if a res is deleted, remove all references of res' foreign key
+// if delete user: remove ref to userId from project, and task entities
+// if delete task: remove ref from project and task entities [children and parents]
+// if delte project: CASCADE delte all references in tasks, and all tasks' refs to projectId
+//
+
+const deleteUser = uid => {
+  // remove user with DELETE
+  // constraint: If a user is associated with a project (ie owner) then cannot
+  // be deleted.  THIS WILL BE VALIDATED ON THE CLIENT SIDE THE DATABASE WILL
+  // ASSUME VALID OPERATIONS ARE PRESENTED
+  //
+  // get all tasks filtered by uid: update each task to remove uid reference
+  //
+  // NOTE: beware json-server does a cascade delete.
+}
+
 const apiError = status => ({
   error: `The command could not be completed. Status: ${status}`
 })
 
 const logMe = (label, message) => {
   console.group(label)
-  console.info(message + '\n')
+  console.info(message, '\n')
   console.groupEnd()
 }
 
@@ -35,10 +52,18 @@ const getProjectById = id => {
   return axios.get(projectDetails(id)).then(res => res.data)
 }
 
+/* loaders.project.clear(id) to clear a cache
+ */
 const loaders = {
-  task: new DataLoader(keys => Promise.all(keys.map(getTaskById))),
-  user: new DataLoader(keys => Promise.all(keys.map(getUserById))),
-  project: new DataLoader(keys => Promise.all(keys.map(getProjectById)))
+  task: new DataLoader(keys => Promise.all(keys.map(getTaskById)), {
+    cache: false
+  }),
+  user: new DataLoader(keys => Promise.all(keys.map(getUserById)), {
+    cache: false
+  }),
+  project: new DataLoader(keys => Promise.all(keys.map(getProjectById)), {
+    cache: false
+  })
 }
 
 const resolvers = {
@@ -80,25 +105,98 @@ const resolvers = {
       return 201 === status ? loaders.project.load(data.id) : apiError(status)
     },
 
+    deleteProject: async (_, { id }) => {
+      logMe('DeleteProject', id)
+      // remove project with delete
+      // get all tasks filtered by pid : call delete and delete them
+      // get user associated with this pid and remove project ** this may not exist.
+      //
+      try {
+        /* json server has a simple cascade-like delete
+         * ie if deleting a project will delete all
+         * tasks that references said project as a foreign key.
+         * In our case each Task has a projectId that references a project.
+         * see: https://github.com/typicode/json-server/blob/7c32f7121f10fbe675fac4be0853c4946f38709e/src/server/mixins.js#L10-L38
+         */
+        const projectUrl = projectDetails(id)
+        logMe('project url: ', projectUrl)
+        await axios.delete(projectUrl)
+
+        return { id }
+      } catch (error) {
+        console.log(error)
+        return apiError(error)
+      }
+    },
+
     createTask: async (_, args) => {
       logMe('CreateTask', args)
-      const { status, data } = await axios.post(
-        `${legacyBaseUrl}/tasks/`,
-        args
-      )
+      const { status, data } = await axios.post(`${legacyBaseUrl}/tasks/`, args)
+      // TODO: add in relationships
+      // 1. link children to parent tasks
+      // 2. link parents to child task
+      // 3. update project.tasks to include me
+      //
       return 201 === status ? loaders.task.load(data.id) : apiError(status)
     },
 
     deleteTask: async (_, args) => {
       logMe('DeleteTask', args)
-      const { id } = args
-      const { status } = await axios.delete(
-        `${legacyBaseUrl}/tasks/${id}`
-      )
-      //to prevent error, need to return non-null value
-      return {id}
-    },
+      try {
+        const { id } = args
 
+        // get task
+        const { data: task } = await axios.get(taskDetails(id))
+
+        // get all other tasks in the project
+        // ?_embed=tasks gets nested task result / eager-loading / join
+        const { data: aProject } = await axios.get(
+          projectDetails(task.projectId) + '?_embed=tasks'
+        )
+
+        const promises = []
+        const updatedTasks = aProject.tasks.filter(aTask => +aTask.id !== +id)
+
+        // Update all parent and child references
+        //
+        updatedTasks.forEach(aTask => {
+          const children = aTask.children.filter(child => +child !== +id)
+          const parents = aTask.parents.filter(parent => +parent !== +id)
+          console.log(
+            `PATCH ${id}:: TASK(${aTask.id}: children: ${
+              aTask.children
+            }, parents: ${aTask.parents})`
+          )
+          console.log(
+            `PATCH ${id}:: TASK(${
+              aTask.id
+            }: children: ${children}, parents: ${parents}\n\n`
+          )
+          promises.push(
+            axios.patch(taskDetails(aTask.id), { children, parents })
+          )
+        })
+
+        // updatedTasks is a list of objects, transform tasks
+        // to an array of ids.
+        //
+        promises.push(
+          axios.patch(projectDetails(task.projectId), {
+            tasks: updatedTasks.map(tobj => tobj.id)
+          })
+        )
+
+        // Delete the task itself
+        promises.push(axios.delete(`${legacyBaseUrl}/tasks/${id}`))
+
+        await Promise.all(promises)
+
+        return { id }
+      } catch (error) {
+        console.log(error)
+        return apiError(error)
+      }
+    },
 
     updateTask: async (_, args) => {
       logMe('UpdateTask', args)
@@ -111,10 +209,6 @@ const resolvers = {
       const child = await loaders.task.load(childId)
       const parent = await loaders.task.load(parentId)
 
-      /* TODO: Discuss with group how to handle this case.
-       * This code hides an exception, perhaps it is better
-       * to throw...
-       */
       if ('errors' in child || 'errors' in parent) return {}
 
       let { status } = await axios.patch(taskDetails(childId), {
