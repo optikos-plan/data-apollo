@@ -296,7 +296,22 @@ const resolvers = {
       })
       logMe('UpdateUser', `id: ${id}\tname: ${name}\temail: ${email}`)
       return 200 === status ? loaders.user.load(id) : apiError(status)
-    }
+    },
+
+    deleteUser: async (_, { id }) => {
+      logMe('DeleteUsers', id)
+      
+      try {
+        const userUrl = userDetails(id)
+        logMe('user url: ', userUrl)
+        await axios.delete(userUrl)
+
+        return { id }
+      } catch (error) {
+        console.log(error)
+        return apiError(error)
+      }
+    },
   }
 }
 
