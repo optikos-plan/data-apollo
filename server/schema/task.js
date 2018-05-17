@@ -32,7 +32,7 @@ const Task = `
     """
     The status of the project
     """
-    status: CompletionStatus
+    status: String!
 
     """
     The list of tasks this task depends on. Its dependencies

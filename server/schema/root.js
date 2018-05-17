@@ -66,7 +66,7 @@ const RootMutation = `
     """
     updateTaskStatus(
       id: ID!
-      status: CompletionStatus!
+      status: String!
     ): Task
 
 
