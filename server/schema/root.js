@@ -1,7 +1,6 @@
 const Task = require('./task')
 const resolvers = require('./resolvers')
 
-
 const RootQuery = `
   type RootQuery {
     """
@@ -105,13 +104,13 @@ const RootMutation = `
       userId: ID!
       title: String!
       status: CompletionStatus = ASSIGNED
-      children: [ID] = []
+      child: ID
       endDate: String = ""
-      parents: [ID] = []
+      parent: ID
     ): Task
 
     """
-    Create User 
+    Create User
     """
     createUser (
       name: String!
