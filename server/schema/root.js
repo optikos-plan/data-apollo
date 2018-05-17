@@ -62,6 +62,15 @@ const RootMutation = `
 
 
     """
+    Update Task Status
+    """
+    updateTaskStatus(
+      id: ID!
+      status: CompletionStatus!
+    ): Task
+
+
+    """
     Update Task title
     """
     updateTaskTitle(
