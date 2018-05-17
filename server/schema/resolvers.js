@@ -16,16 +16,16 @@ const projectDetails = makeDetailsUrl('projects')
 // if delte project: CASCADE delte all references in tasks, and all tasks' refs to projectId
 //
 
-const deleteUser = uid => {
-  // remove user with DELETE
-  // constraint: If a user is associated with a project (ie owner) then cannot
-  // be deleted.  THIS WILL BE VALIDATED ON THE CLIENT SIDE THE DATABASE WILL
-  // ASSUME VALID OPERATIONS ARE PRESENTED
-  //
-  // get all tasks filtered by uid: update each task to remove uid reference
-  //
-  // NOTE: beware json-server does a cascade delete.
-}
+/* const deleteUser = uid => {
+ *   // remove user with DELETE
+ *   // constraint: If a user is associated with a project (ie owner) then cannot
+ *   // be deleted.  THIS WILL BE VALIDATED ON THE CLIENT SIDE THE DATABASE WILL
+ *   // ASSUME VALID OPERATIONS ARE PRESENTED
+ *   //
+ *   // get all tasks filtered by uid: update each task to remove uid reference
+ *   //
+ *   // NOTE: beware json-server does a cascade delete.
+ * } */
 
 const apiError = status => ({
   error: `The command could not be completed. Status: ${status}`
@@ -131,21 +131,46 @@ const resolvers = {
 
     createTask: async (_, args) => {
       logMe('CreateTask', args)
-      const { status, data } = await axios.post(`${legacyBaseUrl}/tasks/`, args)
-      // TODO: add in relationships
-      // 1. link children to parent tasks
-      // 2. link parents to child task
-      // 3. update project.tasks to include me
-      //
-      return 201 === status ? loaders.task.load(data.id) : apiError(status)
+      const { projectId, userId, title, status, child, parent } = args
+
+      const task = {
+        projectId,
+        userId,
+        title,
+        status,
+        children: [],
+        parents: []
+      }
+      try {
+        if (child) task.children = [child]
+        if (parent) task.parents = [parent]
+
+        const { data } = await axios.post(`${legacyBaseUrl}/tasks/`, task)
+
+        const project = await loaders.project.load(projectId)
+        await axios.patch(projectDetails(projectId), {
+          tasks: [...project.tasks, data.id]
+        })
+
+        if (child) {
+          const baby = await loaders.task.load(child)
+          baby.parents = [...baby.parents, data.id]
+          await axios.patch(taskDetails(child), { parents: baby.parents })
+        } else if (parent) {
+          const folks = await loaders.task.load(parent)
+          folks.children = [...folks.children, data.id]
+          await axios.patch(taskDetails(parent), { children: folks.children })
+        }
+        return data
+      } catch (error) {
+        console.log(error)
+        return apiError(error)
+      }
     },
 
     createUser: async (_, args) => {
       logMe('CreateUser', args)
-      const { status, data } = await axios.post(
-        `${legacyBaseUrl}/users/`,
-        args
-      )
+      const { status, data } = await axios.post(`${legacyBaseUrl}/users/`, args)
       return 201 === status ? loaders.user.load(data.id) : apiError(status)
     },
 
@@ -272,8 +297,6 @@ const resolvers = {
       logMe('UpdateUser', `id: ${id}\tname: ${name}\temail: ${email}`)
       return 200 === status ? loaders.user.load(id) : apiError(status)
     }
-
-
   }
 }
 
