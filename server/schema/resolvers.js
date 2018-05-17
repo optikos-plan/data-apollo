@@ -168,6 +168,19 @@ const resolvers = {
       }
     },
 
+    updateTaskStatus: async (_, { id, status }) => {
+      try {
+        logMe('UpdateTaskStatus', id, status)
+        const { status: respStatus } = await axios.patch(taskDetails(id), {
+          status
+        })
+        return 200 === respStatus ? loaders.task.load(id) : apiError(respStatus)
+      } catch (error) {
+        console.log(error)
+        return { error }
+      }
+    },
+
     createUser: async (_, args) => {
       logMe('CreateUser', args)
       const { status, data } = await axios.post(`${legacyBaseUrl}/users/`, args)
