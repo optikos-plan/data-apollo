@@ -127,6 +127,14 @@ const RootMutation = `
     ) : User
 
     """
+    Delete User
+    """
+    deleteUser (
+      id: ID!
+    ): Boolean
+
+
+    """
     Delete Task
     """
     deleteTask (
