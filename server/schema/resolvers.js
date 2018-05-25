@@ -134,7 +134,7 @@ const resolvers = {
       const { projectId, userId, title, status, child, parent } = args
 
       const task = {
-        projectId,
+        projectId: +projectId,
         userId,
         title,
         status,
@@ -203,7 +203,9 @@ const resolvers = {
         )
 
         const promises = []
+        console.log("before filtered", aProject)
         const updatedTasks = aProject.tasks.filter(aTask => +aTask.id !== +id)
+        console.log("filtered project tasks", updatedTasks)
 
         // Update all parent and child references
         //
